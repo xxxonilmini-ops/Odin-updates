@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -u
+
+CONFIG="/etc/vines/vines-updater.conf"
+VERSION_FILE="/etc/vines/version"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vines-updater"
+
+source "$CONFIG"
+mkdir -p "$CACHE_DIR"
+
+current_version="$(tr -d '[:space:]' < "$VERSION_FILE")"
+manifest="$(curl --fail --silent --show-error --location "$VINES_MANIFEST_URL")" || exit 0
+latest_version="$(jq -r '.version // empty' <<<"$manifest")"
+
+[ -n "$latest_version" ] || exit 0
+[ "$latest_version" != "$current_version" ] || exit 0
+
+if ! kdialog --title "OdinOS" --yesno "Обновление OdinOS $latest_version найдено. Скачать и установить?"; then
+  exit 0
+fi
+
+package_url="$(jq -r '.package_url // empty' <<<"$manifest")"
+package_sha256="$(jq -r '.sha256 // empty' <<<"$manifest")"
+signature_url="$(jq -r '.signature_url // empty' <<<"$manifest")"
+package_file="$CACHE_DIR/$VINES_PACKAGE_NAME-$latest_version.pkg.tar.zst"
+signature_file="$package_file.minisig"
+
+[ -n "$package_url" ] && [ -n "$package_sha256" ] && [ -n "$signature_url" ] || exit 1
+curl --fail --silent --show-error --location "$package_url" -o "$package_file"
+curl --fail --silent --show-error --location "$signature_url" -o "$signature_file"
+
+actual_sha256="$(sha256sum "$package_file" | awk '{print $1}')"
+[ "$actual_sha256" = "$package_sha256" ] || { notify-send "OdinOS" "Обновление не прошло проверку SHA-256"; exit 1; }
+minisign -Vm "$package_file" -x "$signature_file" -P "$VINES_PUBLIC_KEY" || { notify-send "OdinOS" "Подпись обновления недействительна"; exit 1; }
+
+pkexec /usr/local/libexec/vines-update-install "$package_file" "$latest_version"

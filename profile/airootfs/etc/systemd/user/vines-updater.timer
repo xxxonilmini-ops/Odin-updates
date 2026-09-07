@@ -1,0 +1,11 @@
+[Unit]
+Description=Check OdinOS updates every three days
+
+[Timer]
+OnBootSec=30min
+OnUnitActiveSec=3d
+Persistent=true
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

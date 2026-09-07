@@ -1,0 +1,11 @@
+pkgname=odinos-system
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='OdinOS release metadata and system files'
+arch=('x86_64')
+license=('custom')
+
+package() {
+  install -Dm644 "$srcdir/version" "$pkgdir/etc/vines/version"
+  install -Dm644 "$srcdir/RELEASE_NOTES" "$pkgdir/usr/share/vines/RELEASE_NOTES"
+}

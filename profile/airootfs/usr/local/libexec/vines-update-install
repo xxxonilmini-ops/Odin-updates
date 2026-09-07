@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PACKAGE_FILE="$1"
+NEW_VERSION="$2"
+VERSION_FILE="/etc/vines/version"
+BACKUP_DIR="/var/lib/vines-updater/rollback"
+
+mkdir -p "$BACKUP_DIR"
+cp -f "$VERSION_FILE" "$BACKUP_DIR/version.previous"
+old_package="$(find /var/cache/pacman/pkg -maxdepth 1 -type f -name 'odinos-system-*.pkg.tar.*' | sort -V | tail -n 1 || true)"
+[ -z "$old_package" ] || cp -f "$old_package" "$BACKUP_DIR/"
+
+if pacman -U --noconfirm "$PACKAGE_FILE"; then
+  printf '%s\n' "$NEW_VERSION" > "$VERSION_FILE"
+  exit 0
+fi
+
+previous_package="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'odinos-system-*.pkg.tar.*' | sort -V | tail -n 1 || true)"
+if [ -n "$previous_package" ]; then
+  pacman -U --noconfirm "$previous_package" || true
+fi
+cp -f "$BACKUP_DIR/version.previous" "$VERSION_FILE"
+exit 1

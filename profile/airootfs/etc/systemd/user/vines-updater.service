@@ -1,0 +1,6 @@
+[Unit]
+Description=Check for OdinOS updates
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vines-update-check
