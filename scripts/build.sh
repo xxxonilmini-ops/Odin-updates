@@ -15,6 +15,8 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 BASELINE_DIR="/usr/share/archiso/configs/baseline"
+mkdir -p "$PROFILE_DIR/airootfs"
+cp -an "$BASELINE_DIR/airootfs/." "$PROFILE_DIR/airootfs/"
 for boot_dir in efiboot syslinux; do
   if [ ! -d "$PROFILE_DIR/$boot_dir" ]; then
     cp -a "$BASELINE_DIR/$boot_dir" "$PROFILE_DIR/"
