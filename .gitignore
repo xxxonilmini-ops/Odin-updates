@@ -1,0 +1,11 @@
+binary/
+cache/
+chroot/
+source/
+artifacts/
+work/
+*.iso
+*.img
+*.squashfs
+*.efi
+*.bak
