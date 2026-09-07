@@ -1,0 +1,33 @@
+name: Build OdinOS ISO
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out OdinOS
+        uses: actions/checkout@v4
+
+      - name: Build ISO in Arch Linux
+        run: |
+          mkdir -p artifacts
+          docker run --rm --privileged --security-opt seccomp=unconfined \
+            -v "$PWD:/src" \
+            -w /src \
+            archlinux:latest bash -lc '
+              pacman -Sy --noconfirm archiso
+              bash scripts/build.sh
+            '
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: odinos-iso
+          path: artifacts/*.iso
+          if-no-files-found: error
